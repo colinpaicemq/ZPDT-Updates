@@ -1,0 +1,14 @@
+/* REXX */
+/*
+exec to CREATE DEFINE ALIAS commands from ISPF edit session
+*/
+ADDRESS ISPEXEC
+'ISREDIT MACRO (lines) '
+ do j = 1 by 1
+   "ISREDIT      ( d )  = LINE   " j
+   if rc <> 0 then leave
+   parse var d  al . base .
+   string = " DEFINE ALIAS ((NAME("al") RELATE('"base"'))"
+   "ISREDIT  LINE  (j) =  (string)"
+ end
+exit

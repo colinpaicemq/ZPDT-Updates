@@ -18,6 +18,11 @@ experiences.  For example, I have
 - VSAM files
 - USS file systems
 
+## Work in progress
+
+- [copying IODS from one system to another](HCD.MD)
+- [Catalog stuff](CATALOG.md)
+
 ## The system I am moving to
 
 This is a different configuration to the ZD&T and ZPDT systems, and the migration is not easy.
@@ -47,6 +52,8 @@ Define my userid see [Batch define](JCL.COLIN.JCL).   Things to note
 If the userid is to be able to access spool datasets from SDSF it needs access to them.
 
 When these jobs have run, I should be able to logon with my userid using the TSO class and accounting information.
+
+
 
 ## Using USER.PARMLIB
 You can configure the IPL to use definitions from different datasets, typically names like SYS1.PARMLIB, and USER.PARMLIB.
@@ -198,6 +205,7 @@ checking. Otherwise, RACF would allow users to create or access only data sets p
 discrete profiles. If your installation uses nonstandard names for temporary data sets, you must
 also predefine entries in the global access checking table that allow these data sets to be created
 and accessed.
-*
-See [JCL](JCL/PROJECTALL.JCL.)
+
+See [JCL PROTECTALL](JCL/PROJECTALL.JCL.) to enable this.
+
 The above JCL also makes the master catalgo read only for most people  except those in SYS1 group.

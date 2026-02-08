@@ -1,0 +1,52 @@
+/* REXX */
+/*
+exec to Nonvsam records from a catalog listing
+*/
+ADDRESS ISPEXEC
+'ISREDIT MACRO (lines) '
+   data.1 = "NONVSAM 2 10"
+   fcol.1 = 18
+   flen.1 = 48
+   data.2 = "CREATION 38 48 "
+   fcol.2 = 54
+   flen.2 = 8
+   data.3 = "VOLSER 8 15  "
+   fcol.3 = 27
+   flen.3 = 8
+   data.0 = 3
+   sortcols  = "32 50  D"
+ "ISREDIT autosave off     "
+  "ISREDIT exclude all"
+  "ISREDIT find NONVSAM   2 10 ALL       "
+  "ISREDIT find CREATION ALL         "
+  "ISREDIT find VOLSER   ALL         "
+   if rc != 0 then data.0 = 2 /* ignore the volser */
+  "ISREDIT delete all  x             "
+ do j = 1  by 1
+   string = ""
+   do i = 1 to data.0
+     "ISREDIT find "data.i
+     if rc <> 0 then leave
+     "ISREDIT         (f) = LINENUM .ZCSR "
+     "ISREDIT      ( d )  = LINE   " f
+      name = substr(d,fcol.i,flen.i) /* from col and length */
+      if i = 1 then name = substr(name,1,30)
+      string = string || " " || name
+      /*
+     "ISREDIT delete     " f
+      */
+   end
+   /*
+   "ISREDIT  LINE  (f) =  (string)"
+   */
+   if rc <> 0 then leave
+   out.j = string
+ end
+  "ISREDIT exclude all"
+  "ISREDIT delete all  x             "
+  do  i = 1 to j -1
+   v = out.i
+    "ISREDIT  LINE_after .zcsr  =   (v)"
+  end
+  "ISREDIT sort     " sortcols
+exit
