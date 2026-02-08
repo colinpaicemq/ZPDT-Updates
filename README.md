@@ -20,7 +20,7 @@ experiences.  For example, I have
 
 ## Work in progress
 
-- [copying IODS from one system to another](HCD.MD)
+- [copying IODS from one system to another](HCD.md)
 - [Catalog stuff](CATALOG.md)
 
 ## The system I am moving to
