@@ -4,8 +4,8 @@ You may want to export an existing hardware configuration.
 ## Export
 From the HCD main ISPF panel
 
-- 6.  Maintain I/O definition files    
-- 5.  Export I/O definition file
+- option 6.  Maintain I/O definition files    
+- option 5.  Export I/O definition file
 - Specify userid and Node Id as *
 - This creates a data set *tsoid.EXPORTED.iodfname*
 
@@ -13,7 +13,7 @@ From the HCD main ISPF panel
 
 From the HCD main ISPF panel
 
-- 6.  Maintain I/O definition files    
-- 6.  Import I/O definition file
+- option 6.  Maintain I/O definition files    
+- option 6.  Import I/O definition file
 
-To use it you will need to update your SYSn.IPLPARM(LOADxx) member 
+To use it you will need to update your SYSn.IPLPARM(LOADxx) memberb 
