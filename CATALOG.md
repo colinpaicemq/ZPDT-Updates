@@ -1,5 +1,14 @@
 # Catalog related activities
 
+## Create a user catalog
+
+You should define at least one user catalog for your non system datasets.  See [JCL](JCL/USERCAT.JCL)
+You could have 
+
+- a usercatalog for subsystem datasets, so MQ and DB2 datasets go in one catalog,
+- a usercatlog for general users
+- A usercatalog for sysprogs
+
 ## Migrate catalogs and aliases
 
 List the aliases in the master catalog

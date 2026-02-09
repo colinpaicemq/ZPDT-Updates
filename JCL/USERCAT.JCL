@@ -1,0 +1,15 @@
+//IBMDF  JOB 1,MSGCLASS=H 
+//S1  EXEC PGM=IDCAMS 
+//SYSPRINT DD SYSOUT=* 
+//SYSIN DD * 
+ DEFINE USERCATALOG - 
+      ( NAME('USER08.ICFCAT') - 
+        MEGABYTES(15 15) - 
+        VOLUME(USER08) - 
+        ICFCATALOG  - 
+        FREESPACE(10 10) - 
+        STRNO(3  ) ) - 
+        DATA( CONTROLINTERVALSIZE(4096) - 
+              BUFND(4) ) - 
+        INDEX(BUFNI(4) ) 
+/* 
