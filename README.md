@@ -4,8 +4,8 @@ TThis repository is a list of the customising I did to the new standard system
 
 ## Background
 
-I have an existing ZD&T system where I do application development.  I have done a lot of configration and blogged my 
-experiences.  For example, I have 
+I have an existing ZD&T system where I do application development.  I have done a lot of configration 
+and blogged my experiences.  For example, I have 
 
 - started tasks
 - parmlib updates
@@ -34,21 +34,29 @@ I want to put members in USER.PROCLIB, and USER.PARMLIB.
 
 ### Setting up to logon
 
-Datasets owned by userid COLIN map to a usercatalog.   To use the usercatalog it has to be in the master catalog.
+Datasets owned by userid COLIN map to a usercatalog.   
+To use the usercatalog it has to be in the master catalog.
 See [import user catalog](JCL/importCatalog.JCL).
 
 To point a High Level Qualifier(HLQ) at this user catalog you need to [define an alias](JCL/defineAlias.JCL)
 
-Best practice is not to give a userid access to resources, but to connect them to a group, and give the group access to the resources.  For example, if someone in your organisation is replaced, then when using a group it is easy to give the new person access.  If a userid is given access - it is very hard to find what acccess a userid has , and to give another userid access to the resources.
+Best practice is not to give a userid access to resources, but to connect them to a group, 
+and give the group access to the resources.  
+For example, if someone in your organisation is replaced, 
+then when using a group it is easy to give the new person access.  
+If a userid is given access - it is very hard to find what acccess a userid has, 
+and to give another userid access to the resources.
 
 See [defintion of my group](JCL/MYGROUP.JCL). 
 
 Define my userid see [Batch define](JCL.COLIN.JCL).   Things to note
 
 - I found it easier to define it then alter it. - 
-- If you let the system give you a Unix ID (UID) it can change from day to day.  If you want to import USS file systems, the files may have a differnt UID.  I found it best to specify a userid, then change all the files owned by my userid to have this UID.
-- Do not give a userid access to resources - connect the userid to a group which has the required accesses.
-- As this userid will be using TSO ISPF and ISPF, you need to give the userid access to these.
+- If you let the system give you a Unix ID (UID) it can change from day to day.  
+If you want to import USS file systems, the files may have a differnt UID.  
+I found it best to specify a userid, then change all the files owned by my userid to have this UID.
+- Do not give a userid access to resources - connect the userid to a group, and give the group the required accesses.
+- As this userid will be using TSO ISPF and ISPF, you need to give the userid access to these facilities.
 If the userid is to be able to access spool datasets from SDSF it needs access to them.
 
 When these jobs have run, I should be able to logon with my userid using the TSO class and accounting information.
@@ -57,6 +65,7 @@ When these jobs have run, I should be able to logon with my userid using the TSO
 
 ## Using USER.PARMLIB
 You can configure the IPL to use definitions from different datasets, typically names like SYS1.PARMLIB, and USER.PARMLIB.
+You can IPL with one set of PARMLIB libraries, and use the [MVS SETLOAD command](https://www.ibm.com/docs/en/zos/3.2.0?topic=sc-syntax-16) to change the libraries.
 The order may be USER.ABCD.PARMLIB. SYS1.ABCD.PARMLIB, SYS1,PARMLIB. Where ABCD is the name of a system, and has members specific to that system name.
 
 You can specify these datasets in the SYSn.IPLPARM member.
@@ -209,3 +218,29 @@ and accessed.
 See [JCL PROTECTALL](JCL/PROJECTALL.JCL.) to enable this.
 
 The above JCL also makes the master catalgo read only for most people  except those in SYS1 group.
+
+# Setting up userids
+##  General
+
+With systems like zD&T or ZPDT, you can download a refresh z/OS system.  You then need to migrate your
+environment into the new system.  For example migrate userid,ZFS, certificates JCL, procedures, and parmlib.
+
+## Setting up a userid
+
+It may be easier to create a userid with JCL, so with the next system you just submit the JCL members
+to define your userids, groups, other resources, and permisssions.
+
+With OMVS segments, users need a unique UID.  You can use autoid for z/OS to allocate the id, but you may
+with to specify a specific value, which is the same across systems.
+If you have different id on different instances you can get 
+into difficulties accessing files.
+
+You can mount a ZFS, and the files have an owner's UID.  If your UID is different you may not be able
+to access the files.
+It is much easier to specify the same UID, and not use AUTOID.
+See the discussion in 
+[How do I allocate a Unix id on z/OS?](https://colinpaice.blog/2026/03/04/how-do-i-allocate-a-unix-id-on-z-os/)
+
+You can use automount for z/OS to allocate a ZFS when an userid logons on.  See
+[Unix services automount is a blessing and curse.](https://colinpaice.blog/2025/12/24/unix-services-automount-is-a-blessing-and-curse/)
+
