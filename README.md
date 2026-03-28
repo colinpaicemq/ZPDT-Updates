@@ -18,6 +18,49 @@ and blogged my experiences.  For example, I have
 - VSAM files
 - USS file systems
 
+## Direction
+The configuration of the IBM standard image for z/OS is different to standard customer production systems.
+
+-  "Production customers" have a z/OS image, and they 
+refresh the products, while keeping userid, user datasets etc. The production system gradually changes over time.
+-   With the IBM standard image, IBM makes a new level of z/OS available, and you have to migrate userids, datasets etc into the image.  Every 3-6 months there may be a new image available.
+
+Moving from one standard image to the next version of the 
+standard image is different to how production customers 
+migrate to newer levels of products.
+
+I have not seen a document on how to move from one 
+standard image instance to another standard image istance.
+
+This Git repository aims to provide guidance on how to do it.
+Moving to the first standard image may mean a lot of work, but if you do it the right way moving on should be easy.
+
+##  Guidance
+
+My recommendations are
+
+- Create resources. Use JCL to issue command, rather than 
+issue the commands manually.  For example with the standard image
+you may get one userid (IBMUSER), and you want to create more userids.
+Have a JCL member of your create  userid commands.  
+Once created, you just submit the JCL for the follow-on standard image.
+- Have an ordering to the members in a dataset.  
+If you have to define a group before you create a userid 
+which uses this group, then have members R1GROUP, R2USER1.   
+If you sort the file in alphabetical order, and submit 
+them in order, they pre-reqs should be resolved.
+
+
+## Setting up connectivity
+
+The IP addess of the z/OS system is 172.26.1.2
+I had to configure my laptop with this address (running on the server)
+
+    sudo ip route add 172.26.1.0/24 via 10.1.0.3
+
+
+
+
 ## Work in progress
 
 - [copying IODS from one system to another](HCD.md)
@@ -31,6 +74,21 @@ The new system does not follow best practices, and I want to implement some of t
 The top requirement is to create a userid COLIN, and get access to the datasets owned by COLIN.
 
 I want to put members in USER.PROCLIB, and USER.PARMLIB.
+
+## Check the new devmap
+
+I had to merge the devices from my old system and the new one.
+
+Check the storage, and the processors in the devmap
+
+I have
+
+    [system]
+    processors  5 cp cp cp ziip ziip  # number of processors
+
+    memory 10G
+    ...
+
 
 ### Setting up to logon
 
@@ -61,186 +119,122 @@ If the userid is to be able to access spool datasets from SDSF it needs access t
 
 When these jobs have run, I should be able to logon with my userid using the TSO class and accounting information.
 
+## Change ISPF options
+In ISPF option 0
+
+- Remove the / from *Command line at bottom*
+- Scroll down
+    - Screen format 3 ... *3. Max* ...
+    - Terminal Type 4 ... *4. 3278A()...* 
+## Set up your PF keys
+In ISPF issue *KEYS*, change PF12 to RETRIEVE
+
+## Setting up VTAM(NET)
+
+The VTAM definitions are configured for screens 24 deep by 80 wide.  I use wider than this.
+
+- edit  SYS1.VTAMLST(EXLOCAL)
+- Create a new member EXLOCALO from EXLOCAL
+- *C NSX32702 D4B32XX3 ALL* this makes all devices support wide screens
+- Make a defintion for address 0061.   
+0060 is used as the system console,  
+the next 3270 defined will be at 0061 - which is not used, so this makes it available to VTAM.
+- Next time you IPL you should pick up your changes.  If they do not work, issue
+    - V NET,INACT,ID=EXLOCAL
+    - V NET,ACT,ID=EXLOCALO
+
+# Setting up a userid    
+
+### give access  to group IZUADMIN 
+
+   PERMIT ACCT001 CLASS(ACCT) access(read) ID(IZUADMIN) 
+   PERMIT PROC001 CLASS(TSOPROC) access(read) ID(IZUADMIN) 
+   tso setr raclist(TSOPROC,ACCT) refresh 
+
+### Connect a userid to the group
+ 
+   CONNECT  COLIN GROUP(IZUADMIN) 
+
+### FTP startup
+
+I get
+
+     BPXF024I ... EZYFT47I ... line 57: Ignoring keyword "EPSV4".
+
+This is because the FTP configuration file has a mixture of Server and Client configuration.
+
+Add *SUPPRESSIGNOREWARNINGS  TRUE* to TCPIP.TCPPARMS(STPSDATA)
+
+## SMF
+
+Message
 
 
-## Using USER.PARMLIB
-You can configure the IPL to use definitions from different datasets, typically names like SYS1.PARMLIB, and USER.PARMLIB.
-You can IPL with one set of PARMLIB libraries, and use the [MVS SETLOAD command](https://www.ibm.com/docs/en/zos/3.2.0?topic=sc-syntax-16) to change the libraries.
-The order may be USER.ABCD.PARMLIB. SYS1.ABCD.PARMLIB, SYS1,PARMLIB. Where ABCD is the name of a system, and has members specific to that system name.
+HSF0066W Required exit IEFU86 for SMF subsystem SYS not enabled.
+Some data may be missing in SDSF event log.
 
-You can specify these datasets in the SYSn.IPLPARM member.
-In SYS1.IPLPARM(LOADCP) is
-```
-IODF     99 SYS1 
-INITSQA  0000M 0008M 
-SYSCAT   B3SYS1113CCATALOG.Z31B.MASTER 
-SYSPARM  CP 
-IEASYM   (00,CP) 
-NUCLST   00 
-PARMLIB  USER.Z31B.PARMLIB                            B3CFG1 
-PARMLIB  FEU.Z31B.PARMLIB                             B3CFG1 
-PARMLIB  ADCD.Z31B.PARMLIB                            B3SYS1 
-PARMLIB  SYS1.PARMLIB                                 B3RES1 
-NUCLEUS  1 
-SYSPLEX  ADCDPL 
-```
-showing the PARMLIB members, and the disk volume they are on.
+Create USER.PARMLIB(SMFPRMCP), copy SYS1.PARMLIB(SMFPRM00)
+add IEFU86
 
-When a system is IPLed you use a command like
+    SYS(EXITS(IEFACTRT,IEFUJI,IEFU83,IEFU84,IEFU85,IEFUJV,*IEFU86*)), 
+    SUBSYS(STC,EXITS(IEFU83,IEFU84,IEFU85,IEFU29,*IEFU86*),
+    INTERVAL(SMF,SYNC)) 
 
-```
-ipl 0ad8 parm 0adfcp
+### Cleanup 
+Edit SYS1.VTAMLST(ATCCON00).  Remove IVPLCLI,IVPLCLT because the devices they reference do not exist. 
 
-```
-Where 0adf is the address of the DASD volume with the SYS*.IPLPARM on it, and CP is the LOADCP name.
+## Don't know
+     ICH408I USER(BPXROOT ) GROUP(SYS1    ) NAME(##) 
+     SO.JWTTOK.FEKAPPL CL CRYPTOZ ) 
+     INSUFFICIENT ACCESS AUTHORITY ACCESS INTENT(CONTROL)  
+     ACCESS ALLOWED(NONE   )                  
 
-## System startup.
+# Set up OMVS 
 
-There are various members which affect startup for example in the IEASYSxx parmlib member, is (usually) a MSTJCLxx member.
+The /usr file system is set up read only.  
+I want to mount various files systems, so you need to define a directory.
+You cannot use /u because of automount getting in the way.
 
-This is like
-```
-//MSTJCL00 JOB MSGLEVEL=(1,1),TIME=1440                               
-//         EXEC PGM=IEEMB860,DPRTY=(15,15)                            
-//STCINRDR DD SYSOUT=(A,INTRDR)                                       
-//TSOINRDR DD SYSOUT=(A,INTRDR)                                       
-//IEFPDSI  DD DSN=USER.&SYSVER..PROCLIB,DISP=SHR                      
-//         DD DSN=FEU.&SYSVER..PROCLIB,DISP=SHR                       
-//         DD DSN=ADCD.&SYSVER..PROCLIB,DISP=SHR                      
-//         DD DSN=SYS1.PROCLIB,DISP=SHR                               
-//SYSUADS  DD DSN=SYS1.UADS,DISP=SHR                                  
-//SYSLBC   DD DSN=SYS1.BRODCAST,DISP=SHR                              
-```
-Commands are issued during IPL as defined in 
-COMMNDxx members and IEACMDxx members.
-ADCD.Z31B.PARMLIB(COMMNDWS)  has
-
-```
-COM='S JES2,PARM='WARM,NOREQ'' 
-COM='S VLF,SUB=MSTR' 
-COM='S HZR,SUB=MSTR' 
-COM='S VTAM' 
-COM='S VTAM00' 
-COM='S DLF,SUB=MSTR' 
-COM='DD ADD,VOL=B3SYS1' 
-COM='DD NAME=SYS1.&SYSNAME..&SYSVER..DMP&SEQ' 
-COM='DD ALLOC=ACTIVE' 
-```
+    chmount -w /usr          
+    mkdir /usr/zopen/        
+    mkdir /usr/tmp/          
+    chmount -r /usr   
 
 
-For most people the JES2 proc is configured, for example 
-```
-//JES2      PROC MEMBER=JES2PARM,ALTMEM=JES2BACK 
-//IEFPROC   EXEC PGM=HASJES20,DPRTY=(15,15),TIME=1440,PERFORM=9 
-//ALTPARM   DD   DSN=ADCD.&SYSVER..PARMLIB(&ALTMEM),DISP=SHR 
-//HASPPARM  DD   DSN=ADCD.&SYSVER..PARMLIB(&MEMBER),DISP=SHR 
-//PROC00    DD   DSN=USER.&SYSVER..PROCLIB,DISP=SHR 
-//          DD   DSN=FEU.&SYSVER..PROCLIB,DISP=SHR 
-//          DD   DSN=ADCD.&SYSVER..PROCLIB,DISP=SHR 
-//          DD   DSN=SYS1.PROCLIB,DISP=SHR 
-//HASPLIST  DD   DDNAME=IEFRDER 
-```
-
-So there are several places where USER.*.PROCLIB is specified.
-
-If you want to change these, create another set of parmlib members, in case you have an error.  If you make an error the system may not be IPLable, and so you will not be able to fix it. 
-
-### VTAM00
-VTAM00 is a way of issuing a set of console commands.
-
-For example it reads member ADCD.&SYSVER..PARMLIB(VTAM00), which has in it
+## syslogd
 
 ```
-COMMANDPREFIX=NONE   /* THIS IS THE DEFAULT VALUE */ 
-/*--------------------------------------------------------------------* 
-/*--------------------------------------------------------------------* 
-PAUSE 10      /* WAIT FOR SYS TO GET UP FIRST  */ 
-S RRS,SUB=MSTR,GNAME=&SYSNAME 
-S TSO         /* TIME SHARING OPTION */ 
-S SDSF 
-S EZAZSSI,P=S0W1 
-S TCPIP 
-PAUSE 5 
-S TN3270 
-PAUSE 5 
-/*S INETD */ 
-S HTTPD1 
-S CSF 
-S HZSPROC 
-PAUSE 10 
-S SSHD 
-PAUSE 10 
-S IZUANG1 
-PAUSE 3 
-* S IZUSVR1 
-D T                          /* DISPLAY ENDING TIME                 */ 
-* COMMENT LINES MAY ALSO START WITH A SINGLE ASTERISK. 
-* REMEMBER - BLANK LINES ARE A BIG NO-NO. 
-*@ *--------------------------* 
-*@ * IPL STARTUP IS COMPLETE! * 
-*@ * >>> HAVE A NICE DAY! <<< * 
-*@ *--------------------------* 
+*.INETD*.*.*       /var/log/inetd.log 
+auth.* /var/log/auth.log 
+mail.* /var/log//mail -F 640 -D 770 
+local1.err       /var/log/local1.log 
+*.err            /var/log/errors.log 
+# *.CPAGENT.*.*       /var/log/CPAGENT.log 
+*.CPATTLS.*.*       /var/log/CPATTLS 
+*.TTLS*.*.*          /var/log/TTLS.log 
+*.Pagent.*.*        /var/log/Pagent.log 
+*.TCPIP.*.debug     /var/log/TCPIPdebug.log 
+*.TCPIP.*.warning   /var/log/TCPIP.log 
+*.TCPIP.*.err       /var/log/TCPIPerr.log 
+*.TCPIP.*.info      /var/log/TCPIPinfo.log 
+*.SYSLOGD*.*.*      /var/log/syslogd.log 
+*.TN3270*.*.*       /var/log/tn3270.log 
+*.SSHD*.*.*         /var/log/SSHD.log 
+*.FTPD*.*.*         /var/log/FTPD.log 
+daemon.debug        /var/log/SSHDdebug.log 
+*.TCPIP.*.none; 
+*.err            /var/log/errors 
+*.CPAGENT.*.*       /var/log/CPAGENT.log 
+*.TRMD1.*.info      /var/log/TRMD1I.log 
+*.DMD.*.*           /var/log/DMD.log 
 ```
 
-I use a member STARTMQ
-```
-s izusvr1 
-SETSSI ADD,S=CSQ9,I=CSQ3INI,P='CSQ3EPX,%CSQ9,M' 
-PAUSE 1 
-%CSQ9 Start QMGR 
-S Csq9ang 
-S Csq9web 
-PAUSE 10 
-%CSQ9 Start chinit 
-```
+            PARM='PGM /usr/sbin/sshd -f /etc/ssh/sshd_config '                      
+edit /etc/ssh/sshd_config to add 
 
-## Getting to best practice 
+    ALLOWGROUPSS  SYS1  IZUADMIN            
 
-### Use of RACF PROTECTALL
+and connect the userid to the group   
 
-The documentation says
-*
-PROTECTALL(FAILURES | WARNING)
-Activates PROTECTALL processing. When PROTECTALL processing is active, the system
-automatically rejects any request to create or access a data set that is not RACF-protected. This
-processing includes DASD data sets, tape data sets, catalogs, and GDG basenames. Temporary
-data sets that comply with standard MVS temporary data set naming conventions are excluded
-from PROTECTALL processing.
-
-Note that PROTECTALL requires all data sets to be RACF-protected. This includes tape data sets if
-your installation specifies the TAPEDSN operand on the SETROPTS command.
-In order for PROTECTALL to work effectively, you must specify GENERIC to activate generic profile
-checking. Otherwise, RACF would allow users to create or access only data sets protected by
-discrete profiles. If your installation uses nonstandard names for temporary data sets, you must
-also predefine entries in the global access checking table that allow these data sets to be created
-and accessed.
-
-See [JCL PROTECTALL](JCL/PROJECTALL.JCL.) to enable this.
-
-The above JCL also makes the master catalgo read only for most people  except those in SYS1 group.
-
-# Setting up userids
-##  General
-
-With systems like zD&T or ZPDT, you can download a refresh z/OS system.  You then need to migrate your
-environment into the new system.  For example migrate userid,ZFS, certificates JCL, procedures, and parmlib.
-
-## Setting up a userid
-
-It may be easier to create a userid with JCL, so with the next system you just submit the JCL members
-to define your userids, groups, other resources, and permisssions.
-
-With OMVS segments, users need a unique UID.  You can use autoid for z/OS to allocate the id, but you may
-with to specify a specific value, which is the same across systems.
-If you have different id on different instances you can get 
-into difficulties accessing files.
-
-You can mount a ZFS, and the files have an owner's UID.  If your UID is different you may not be able
-to access the files.
-It is much easier to specify the same UID, and not use AUTOID.
-See the discussion in 
-[How do I allocate a Unix id on z/OS?](https://colinpaice.blog/2026/03/04/how-do-i-allocate-a-unix-id-on-z-os/)
-
-You can use automount for z/OS to allocate a ZFS when an userid logons on.  See
-[Unix services automount is a blessing and curse.](https://colinpaice.blog/2025/12/24/unix-services-automount-is-a-blessing-and-curse/)
+Add BPXPRMv6 to add IPV6 support to TCPIP.
 
