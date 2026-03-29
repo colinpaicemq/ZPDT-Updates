@@ -9,9 +9,9 @@ basic configuration.
 
 [Configure parmlib](..parmlib.md)
 
-[Configure VTAM to give you greater than 80 *24 screen size](../vtam.md)
+[Configure VTAM to give you greater than 80 *24 screen size](vtam.md)
 
-[Configure TCPIP](../tcpip.md)
+[Configure TCPIP](tcpip.md)
 
 [Change the console pf keys](..consolepfkeys.md)
 
@@ -19,19 +19,19 @@ basic configuration.
 
 [Using z/OS Unix](..usingUnix.md)
 
-[Confiure the syslog daemon](../syslogd.md)
+[Confiure the syslog daemon](syslogd.md)
 
-[Configure SSh](../ssh.md)
+[Configure SSh](ssh.md)
 
-[configure RACF](../RACF.md)
+[configure RACF](RACF.md)
 
-[Configure Java](../java.md)
+[Configure Java](java.md)
 
-[Configure RRS](../RRS.md)
+[Configure RRS](RRS.md)
 
-[Configuring CSF - ICSF](../ICSF.md)
+[Configuring CSF - ICSF](ICSF.md)
 
-[Logrec](../logrec.md)
+[Logrec](logrec.md)
 
 [Misc fixes](fixes.md)
 
