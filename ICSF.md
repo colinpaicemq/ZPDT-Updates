@@ -1,6 +1,6 @@
 ## ICSF
 
-I have my own CSG data sets, containing my keys.  My JCL is the same as the default, but with
+I have my own (I)CSF data sets, containing my keys.  My Started Task JCL is the same as the default, but with
 a different member
 
 ```

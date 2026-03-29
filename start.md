@@ -1,8 +1,8 @@
 # List of actions to configure standard image
 
-The IP address of z/OS is 172.26.1.2.  [You need to configure your laptop](../laptop.md)
+The IP address of z/OS is 172.26.1.2.  [You need to configure your laptop](laptop.md)
 
-[Configure your devmap](../devmap.md)
+[Configure your devmap](devmap.md)
 
 First IPL.  The default IPL starts up and starts lots of subsystems.  Use PARM xxxxAU initially, until you've done the
 basic configuration.
