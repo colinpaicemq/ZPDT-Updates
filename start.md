@@ -84,3 +84,7 @@ K E,1,1
 ```
 
 Which says clear the message on lines 1 to 1.
+
+## WLM processing 
+
+[Wlm display](wlm.md)
