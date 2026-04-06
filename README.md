@@ -1,6 +1,8 @@
 # ZPDT and ZD&T configuration 
 
-TThis repository is a list of the customising I did to the new standard system
+This repository is a list of the customising I did to the new standard system
+
+I have stuff here - and in [another file](start.md)
 
 ## Background
 

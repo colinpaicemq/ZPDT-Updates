@@ -7,17 +7,17 @@ The IP address of z/OS is 172.26.1.2.  [You need to configure your laptop](lapto
 First IPL.  The default IPL starts up and starts lots of subsystems.  Use PARM xxxxAU initially, until you've done the
 basic configuration.
 
-[Configure parmlib](..parmlib.md)
+[Configure parmlib](parmlib.md)
 
 [Configure VTAM to give you greater than 80 *24 screen size](vtam.md)
 
 [Configure TCPIP](tcpip.md)
 
-[Change the console pf keys](..consolepfkeys.md)
+[Change the console pf keys](consolepfkeys.md)
 
-[Fix SMF](..SMF.md)
+[Fix SMF](SMF.md)
 
-[Using z/OS Unix](..usingUnix.md)
+[Using z/OS Unix](usingUnix.md)
 
 [Confiure the syslog daemon](syslogd.md)
 
